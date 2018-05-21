@@ -5,4 +5,3 @@ Build your html template with your favorite SPA framework. Then you can export a
 1. `npm install` (node > 8 required)
 2. setup config.json
 3. run - `node processTemplate` you can add an index to specify a page from the config, if not specified all pages will be crawled and built
-built templates are placed in *templates* folder
