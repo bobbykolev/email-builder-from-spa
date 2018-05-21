@@ -1,0 +1,16 @@
+{
+  "url": "https://www.google.com/",
+  "pages": [
+    {},
+    {
+      "index": 1,
+      "path": "search?q=puppeteer",
+      "name": "puppeteer-search"
+    },
+    {
+      "index": 2,
+      "path": "search?q=react",
+      "name": "react-search"
+    }
+  ]
+}

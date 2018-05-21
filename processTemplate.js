@@ -6,10 +6,33 @@ const path = require('path');
 const pretty = require('pretty');
 const process = require('process');
 const inlineCss = require('inline-css');
+const config = require('./config');
+const args = process.argv;
 
-(async () => {
-  const args = process.argv;
+//check config
+if (!config || !config.url || !(config.pages.length > 1)) {
+  console.error('Missing configuration!');
+  console.warn('You need to have url and pages in order to continue.');
 
+  return;
+
+} else if (args[2]) {
+  buildTemplate(args[2]);
+} else {
+  asyncForEach(config.pages, async (page, index) => {
+    if (index) {
+      await buildTemplate(index);
+    }
+  });
+}
+
+async function asyncForEach(array, callback) {
+  for (let index = 0; index < array.length; index++) {
+    await callback(array[index], index, array)
+  }
+}
+
+async function buildTemplate(index)  {
   //launch
   const browser = await puppeteer.launch({headless: true, args: ['--disable-http2']});
 
@@ -17,11 +40,6 @@ const inlineCss = require('inline-css');
   const page = await browser.newPage();
   page.setExtraHTTPHeaders({ 'upgrade-insecure-requests': '0' });
   page.setDefaultNavigationTimeout(100000);
-
-  //args
-  args.forEach((val, index) => {
-    console.log(`${index}: ${val}`);
-  });
 
   //on css request
   const stylesheets = {};
@@ -32,8 +50,10 @@ const inlineCss = require('inline-css');
     }
   });
 
+  console.log('URL: ' + config.url + config.pages[index].path);
+
   //load page
-  await page.goto(`http://localhost:4000/${args[2]}`, {timeout: 10000});
+  await page.goto(config.url + config.pages[index].path, {waitUntil: 'networkidle2', timeout: 0});
 
   //make the styles inline
   await page.$$eval('link[rel=stylesheet]', (links, content) => {
@@ -50,19 +70,19 @@ const inlineCss = require('inline-css');
   }, stylesheets);
 
   //remove scrips
-  await page.$$eval('script', (links) => {
-    links.forEach(link => {
+  await page.$$eval('script', scripts => {
+    scripts.forEach(scr => {
       try {
-        document.html.removeChild(link);
+        document.head.removeChild(scr);
       } catch (e) {}
 
       try {
-        document.body.removeChild(link);
+        document.body.removeChild(scr);
       } catch (e) {}
     });
   });
 
-  //remove browser sync link
+  //remove browser sync div
   await page.evaluate(() => {
     try {
       document.body.removeChild(document.getElementById('__bs_notify__'));
@@ -73,18 +93,18 @@ const inlineCss = require('inline-css');
   let html = await page.content();
 
   //make styles inline
-  inlineCss(html, {url: 'http://',preserveMediaQueries: true}).then((inlinedHTML) => {
+  inlineCss(html, {url: ' ',preserveMediaQueries: true}).then((inlinedHTML) => {
     html = inlinedHTML;
 
     //prettify html
     html = pretty(html);
 
-    //write and save the file
-    let filePath = path.resolve(`./templates/${args[2]}.html`);
+    let filePath = path.resolve(`./templates/${config.pages[index].name}.html`);
     fse.outputFile(filePath, html);
+
+    console.log(`FILE saved: - ./templates/${config.pages[index].name}.html`);
   });
 
   //console.log(html);
   await browser.close();
-
-})();
+}
