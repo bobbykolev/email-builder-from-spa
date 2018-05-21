@@ -1,4 +1,4 @@
-# email-builder-from-spa
+# email-builder-from-spa using [Puppeteer](https://developers.google.com/web/tools/puppeteer/)
 
 Build your html template with your favorite SPA framework. Then you can export any page of the SPA with this script which would make the styles inline and it will remove any script tags. I'm using full url paths to the images but that could be configured too.
 
